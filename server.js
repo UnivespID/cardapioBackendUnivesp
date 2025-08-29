@@ -3,27 +3,29 @@ import express from 'express';
 import cors from 'cors';
 import { createClient } from 'redis';
 import { v4 as uuidv4 } from 'uuid';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 
+// Conexão Redis usando variável de ambiente REDIS_URL
+const redisClient = createClient({
+  url: process.env.REDIS_URL
+});
 
-const redisUrl = process.env.REDIS_URL || 'redis://red-d2p2kgjipnbc73899bmg:6379';
-const redisClient = createClient({ url: redisUrl });
-
-redisClient.on('error', err => console.log('Redis Client Error', err));
+redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
 await redisClient.connect();
 
+// Rota para criar pedido
 app.post('/api/orders', async (req, res) => {
   const { visitorId, cartItems, address } = req.body;
 
-  if (!visitorId) return res.status(400).json({ success: false, message: 'visitorId obrigatório' });
+  if (!visitorId) {
+    return res.status(400).json({ success: false, message: 'visitorId obrigatório' });
+  }
 
   const key = `order:${visitorId}`;
 
@@ -43,15 +45,17 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-
+// Rota para listar pedidos (opcional)
 app.get('/api/orders', async (req, res) => {
   try {
     const keys = await redisClient.keys('order:*');
     const orders = [];
+
     for (const key of keys) {
       const value = await redisClient.get(key);
       orders.push({ id: key.split(':')[1], ...JSON.parse(value) });
     }
+
     res.json(orders);
   } catch (err) {
     console.error(err);
