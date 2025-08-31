@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Conexão Redis usando variável de ambiente REDIS_URL
+
 const redisClient = createClient({
   url: process.env.REDIS_URL
 });
@@ -19,7 +19,7 @@ redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
 await redisClient.connect();
 
-// Rota para criar pedido
+
 app.post('/api/orders', async (req, res) => {
   const { visitorId, cartItems, address } = req.body;
 
@@ -45,7 +45,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Rota para listar pedidos (opcional)
+
 app.get('/api/orders', async (req, res) => {
   try {
     const keys = await redisClient.keys('order:*');
